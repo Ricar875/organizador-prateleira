@@ -37,7 +37,6 @@
   h1,h2,h3,.display{ font-family:'Baloo 2',sans-serif; }
   .mono{ font-family:'IBM Plex Mono',monospace; }
 
-  /* ---------- HEADER ---------- */
   header.chalk{
     background:linear-gradient(180deg,var(--chalk) 0%, var(--chalk-2) 100%);
     color:#EFF3E4;
@@ -83,7 +82,6 @@
   .card h2{ margin:0 0 4px; font-size:18px; }
   .card .hint{ font-size:12.5px; color:var(--gray); margin:0 0 14px; }
 
-  /* ---------- FORM ---------- */
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .form-grid .full{ grid-column:1/-1; }
   label{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--chalk); display:block; margin-bottom:5px; }
@@ -132,7 +130,6 @@
   .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:8px; }
   .btn-block{ width:100%; justify-content:center; }
 
-  /* ---------- TOOLBAR ---------- */
   .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
   .search-wrap{ flex:1; min-width:180px; }
   .chips{ display:flex; gap:6px; flex-wrap:wrap; }
@@ -142,7 +139,6 @@
   }
   .chip.active{ background:var(--chalk); color:#fff; border-color:var(--chalk); }
 
-  /* ---------- GRID DE ETIQUETAS ---------- */
   .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
   .empty-state{
     text-align:center; padding:40px 14px; color:var(--gray);
@@ -188,7 +184,6 @@
   .tag-obs{ font-size:12px; color:var(--gray); margin:2px 0 10px; font-style:italic; }
   .tag-actions{ display:flex; gap:6px; flex-wrap:wrap; }
 
-  /* ---------- CENTRAL DE FOTOS ---------- */
   .central{
     background:linear-gradient(180deg,#fff,var(--paper));
     border:1.5px dashed var(--amber-dark);
@@ -220,7 +215,6 @@
 
 <main>
 
-  <!-- FORMULÁRIO -->
   <section class="card">
     <h2 id="formTitulo">📸 Nova verificação</h2>
     <p class="hint">Tire a foto do produto na prateleira, confira o preço e a validade, e registre aqui.</p>
@@ -264,7 +258,6 @@
     </form>
   </section>
 
-  <!-- LISTA -->
   <section class="card">
     <h2>📋 Prateleira monitorada</h2>
     <p class="hint">Toque num item para editar. Vermelho = vencido, amarelo = vencendo, verde = OK.</p>
@@ -285,7 +278,6 @@
     <div class="grid" id="gridProdutos"></div>
   </section>
 
-  <!-- CENTRAL DE FOTOS -->
   <section class="card central">
     <h2>📲 Central de chegada de fotos</h2>
     <p class="hint">Repositores podem fotografar prateleiras e mandar direto para este número. Use os botões abaixo para avisar o responsável sobre itens críticos.</p>
@@ -313,7 +305,7 @@
 
   var LS_PRODUTOS = "prateleira_produtos_v1";
   var LS_CONFIG = "prateleira_config_v1";
-  var CENTRAL_NUMERO_WA = "5575991771095"; // 75 99177-1095 com código do país
+  var CENTRAL_NUMERO_WA = "5575991771095";
 
   var state = {
     produtos: [],
@@ -323,7 +315,6 @@
     fotoAtual: null
   };
 
-  // ---------- STORAGE ----------
   function carregar(){
     try{
       var p = localStorage.getItem(LS_PRODUTOS);
@@ -342,7 +333,6 @@
     localStorage.setItem(LS_CONFIG, JSON.stringify(state.config));
   }
 
-  // ---------- HELPERS ----------
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
   function hojeISO(){
@@ -383,7 +373,6 @@
     return "Sem data cadastrada";
   }
 
-  // ---------- FOTO ----------
   function redimensionarFoto(file, cb){
     var reader = new FileReader();
     reader.onload = function(ev){
@@ -403,7 +392,6 @@
     reader.readAsDataURL(file);
   }
 
-  // ---------- RENDER ----------
   function renderStats(){
     var total = state.produtos.length;
     var vencidos = 0, vencendo = 0, ok = 0;
@@ -486,7 +474,6 @@
     renderGrid();
   }
 
-  // ---------- FORM ----------
   var form = document.getElementById("produtoForm");
   var fotoInput = document.getElementById("fotoInput");
   var fotoPreview = document.getElementById("fotoPreview");
@@ -531,7 +518,7 @@
     if(id){
       var existente = state.produtos.find(function(p){ return p.id === id; });
       if(existente){
-        if(!dados.foto) dados.foto = existente.foto; // manter foto se não trocou
+        if(!dados.foto) dados.foto = existente.foto;
         Object.assign(existente, dados);
       }
     } else {
@@ -544,7 +531,6 @@
     renderTudo();
   });
 
-  // ---------- AÇÕES NA GRID ----------
   document.getElementById("gridProdutos").addEventListener("click", function(e){
     var btn = e.target.closest("button[data-acao]");
     if(!btn) return;
@@ -594,7 +580,6 @@
     }
   });
 
-  // ---------- FILTROS E BUSCA ----------
   document.getElementById("filtroChips").addEventListener("click", function(e){
     var chip = e.target.closest(".chip");
     if(!chip) return;
@@ -609,7 +594,6 @@
     renderGrid();
   });
 
-  // ---------- CONFIG ----------
   var campoDias = document.getElementById("campoDiasAlerta");
   campoDias.addEventListener("change", function(){
     var v = parseInt(campoDias.value, 10);
@@ -618,7 +602,6 @@
     renderTudo();
   });
 
-  // ---------- CENTRAL / WHATSAPP / RELATÓRIO ----------
   function abrirWhats(texto){
     var url = "https://wa.me/"+CENTRAL_NUMERO_WA+"?text="+encodeURIComponent(texto);
     window.open(url, "_blank");
@@ -628,48 +611,4 @@
     var vencidos = state.produtos.filter(function(p){ return statusDe(p)==="vencido"; });
     var vencendo = state.produtos.filter(function(p){ return statusDe(p)==="vencendo"; });
     var linhas = [];
-    linhas.push("📋 *Relatório de Prateleira* — "+formatDataBR(hojeISO()));
-    linhas.push("");
-    linhas.push("🔴 Vencidos ("+vencidos.length+"):");
-    if(vencidos.length===0) linhas.push("  Nenhum ✅");
-    vencidos.forEach(function(p){
-      linhas.push("  • "+p.nome+" — "+(p.setor||"setor n/i")+" — "+labelStatus("vencido",diasAte(p.validade)));
-    });
-    linhas.push("");
-    linhas.push("🟡 Vencendo em breve ("+vencendo.length+"):");
-    if(vencendo.length===0) linhas.push("  Nenhum ✅");
-    vencendo.forEach(function(p){
-      linhas.push("  • "+p.nome+" — "+(p.setor||"setor n/i")+" — "+labelStatus("vencendo",diasAte(p.validade)));
-    });
-    linhas.push("");
-    linhas.push("Total de itens monitorados: "+state.produtos.length);
-    return linhas.join("\n");
-  }
-
-  document.getElementById("btnEnviarRelatorio").addEventListener("click", function(){
-    abrirWhats(montarRelatorio());
-  });
-
-  document.getElementById("btnBaixarRelatorio").addEventListener("click", function(){
-    var blob = new Blob([montarRelatorio()], {type:"text/plain;charset=utf-8"});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "relatorio-prateleira-"+hojeISO()+".txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  // ---------- INIT ----------
-  function init(){
-    carregar();
-    campoDias.value = state.config.diasAlerta;
-    document.getElementById("dataHoje").textContent = formatDataBR(hojeISO());
-    renderTudo();
-  }
-  init();
-
-})();
-</script>
-</body>
-</html>
+    linhas.push("📋
