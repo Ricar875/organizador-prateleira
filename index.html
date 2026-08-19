@@ -1,1 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organizador de Prateleira · Supermercado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2E4;
+    --paper:#FBFCF7;
+    --chalk:#1F3B2C;
+    --chalk-2:#14261B;
+    --amber:#F2A73B;
+    --amber-dark:#B97814;
+    --red:#D6483C;
+    --red-dark:#9A2E25;
+    --green:#4C8C4A;
+    --green-dark:#356234;
+    --gray:#8B8F84;
+    --ink:#24301F;
+    --line:#D9E0C9;
+    --shadow: 0 2px 0 rgba(31,59,44,0.08), 0 8px 20px -10px rgba(31,59,44,0.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, rgba(31,59,44,0.06) 1px, transparent 0) 0 0/16px 16px,
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding-bottom:60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{ font-family:'Baloo 2',sans-serif; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
 
+  header.chalk{
+    background:linear-gradient(180deg,var(--chalk) 0%, var(--chalk-2) 100%);
+    color:#EFF3E4;
+    padding:22px 18px 26px;
+    border-bottom:6px solid var(--amber);
+    position:relative;
+    overflow:hidden;
+  }
+  header.chalk::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 10px);
+    pointer-events:none;
+  }
+  .chalk-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .chalk-title{ font-size:26px; font-weight:800; letter-spacing:.3px; margin:0; display:flex; align-items:center; gap:10px;}
+  .chalk-date{ font-size:12.5px; opacity:.75; font-family:'IBM Plex Mono',monospace; }
+  .stats-row{ display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  .stat-chip{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.16);
+    border-radius:10px;
+    padding:8px 12px;
+    min-width:74px;
+    text-align:center;
+  }
+  .stat-chip .num{ font-family:'Baloo 2'; font-weight:700; font-size:19px; display:block; }
+  .stat-chip .lbl{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; opacity:.75; }
+  .stat-chip.critico .num{ color:#FF8C7F; }
+  .stat-chip.atencao .num{ color:var(--amber); }
+  .stat-chip.ok .num{ color:#8FD98C; }
+
+  main{ max-width:900px; margin:0 auto; padding:18px 14px 0; }
+
+  .card{
+    background:var(--paper);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:18px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+  }
+  .card h2{ margin:0 0 4px; font-size:18px; }
+  .card .hint{ font-size:12.5px; color:var(--gray); margin:0 0 14px; }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-grid .full{ grid-column:1/-1; }
+  label{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--chalk); display:block; margin-bottom:5px; }
+  input[type=text], input[type=number], input[type=date], textarea, select{
+    width:100%;
+    padding:10px 11px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{ outline:2px solid var(--amber); outline-offset:1px; border-color:var(--amber); }
+  textarea{ resize:vertical; min-height:44px; }
+
+  .ocorrencia-select{
+    font-size:16px; font-weight:600; padding:13px 12px; border-width:2px;
+  }
+  .ocorrencia-select.critico{ border-color:var(--red); color:var(--red-dark); }
+  .ocorrencia-select.atencao{ border-color:var(--amber-dark); color:var(--amber-dark); }
+  .ocorrencia-select.ok{ border-color:var(--green); color:var(--green-dark); }
+
+  .photo-box{
+    display:flex; align-items:center; gap:12px;
+    background:#fff; border:1.5px dashed var(--line); border-radius:10px; padding:10px;
+  }
+  .photo-preview{
+    width:64px; height:64px; border-radius:8px; object-fit:cover; background:var(--bg);
+    border:1px solid var(--line); flex-shrink:0;
+  }
+  .photo-preview.empty{ display:flex; align-items:center; justify-content:center; font-size:22px; }
+  label.btn-file{
+    background:var(--chalk); color:#fff; border:none; border-radius:8px;
+    padding:10px 14px; font-weight:600; font-size:13px; cursor:pointer;
+    text-transform:none; letter-spacing:0; margin:0; display:inline-block;
+  }
+  input[type=file]{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; white-space:nowrap; border:0; clip:rect(0,0,0,0);
+  }
+
+  .form-actions{ display:flex; gap:10px; margin-top:14px; }
+  button{ font-family:'Inter',sans-serif; cursor:pointer; }
+  .btn{
+    border:none; border-radius:10px; padding:11px 18px; font-weight:700; font-size:14px;
+    display:inline-flex; align-items:center; gap:7px; transition:transform .08s ease;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{ background:var(--amber); color:#3A2500; }
+  .btn-primary:hover{ background:var(--amber-dark); color:#fff; }
+  .btn-ghost{ background:transparent; color:var(--chalk); border:1.5px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--chalk); }
+  .btn-whats{ background:#2FA84F; color:#fff; }
+  .btn-whats:hover{ background:#268a41; }
+  .btn-danger{ background:#fff; color:var(--red-dark); border:1.5px solid var(--red); }
+  .btn-sm{ padding:7px 11px; font-size:12.5px; border-radius:8px; }
+  .btn-block{ width:100%; justify-content:center; }
+
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .search-wrap{ flex:1; min-width:180px; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    border:1.5px solid var(--line); background:#fff; border-radius:999px;
+    padding:7px 13px; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer;
+  }
+  .chip.active{ background:var(--chalk); color:#fff; border-color:var(--chalk); }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .empty-state{ text-align:center; padding:40px 14px; color:var(--gray); }
+  .empty-state .emoji{ font-size:34px; display:block; margin-bottom:6px;}
+
+  .tag{
+    position:relative;
+    background:#fff;
+    border-radius:12px;
+    padding:14px 14px 12px;
+    border:1.5px solid var(--line);
+    border-left:7px solid var(--gray);
+    box-shadow:0 1px 0 rgba(0,0,0,0.03);
+  }
+  .tag.critico{ border-left-color:var(--red); }
+  .tag.atencao{ border-left-color:var(--amber); }
+  .tag.ok{ border-left-color:var(--green); }
+  .tag::before{
+    content:"";
+    position:absolute; left:-4px; top:16px;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--bg); border:1.5px solid var(--line);
+  }
+
+  .tag-headline{
+    display:flex; align-items:center; gap:7px; font-weight:800; font-size:14.5px;
+    padding:6px 10px; border-radius:8px; margin-bottom:10px;
+  }
+  .tag.critico .tag-headline{ background:#FBE4E1; color:var(--red-dark); }
+  .tag.atencao .tag-headline{ background:#FCEBCB; color:var(--amber-dark); }
+  .tag.ok .tag-headline{ background:#E1F0DF; color:var(--green-dark); }
+
+  .tag-top{ display:flex; gap:10px; }
+  .tag-photo{ width:52px; height:52px; border-radius:8px; object-fit:cover; background:var(--bg); border:1px solid var(--line); flex-shrink:0;}
+  .tag-photo.empty{ display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--gray);}
+  .tag-info{ flex:1; min-width:0; }
+  .tag-nome{ font-weight:700; font-size:14.5px; margin:0 0 2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .tag-setor{ font-size:11.5px; color:var(--gray); }
+
+  .tag-meta{ display:flex; justify-content:space-between; align-items:baseline; margin:11px 0 4px; border-top:1px dashed var(--line); padding-top:9px; }
+  .tag-preco{ font-family:'IBM Plex Mono'; font-weight:600; font-size:15px; color:var(--chalk); }
+  .tag-validade{ font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--gray); text-align:right; }
+  .tag-obs{ font-size:12px; color:var(--ink); margin:6px 0 10px; background:var(--bg); padding:7px 9px; border-radius:7px; }
+  .tag-actions{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
+  .central{
+    background:linear-gradient(180deg,#fff,var(--paper));
+    border:1.5px dashed var(--amber-dark);
+  }
+  .central .numero{
+    font-family:'IBM Plex Mono'; font-size:19px; font-weight:600; color:var(--chalk);
+    background:#fff; border:1.5px solid var(--line); border-radius:10px; padding:10px 14px;
+    display:inline-flex; align-items:center; gap:8px; margin:8px 0 14px;
+  }
+  .central-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .aviso-navegador{
+    background:#FCEBCB; color:var(--amber-dark); font-size:12.5px; padding:9px 11px;
+    border-radius:8px; margin-top:12px; display:none;
+  }
+
+  footer.appfoot{ text-align:center; font-size:11.5px; color:var(--gray); padding:20px 14px 0; }
+
+  @media (max-width:520px){
+    .form-grid{ grid-template-columns:1fr; }
+    .chalk-title{ font-size:21px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="chalk">
+  <div class="chalk-top">
+    <h1 class="chalk-title">🛒 Organizador de Prateleira</h1>
+    <span class="chalk-date mono" id="dataHoje"></span>
+  </div>
+  <div class="stats-row" id="statsRow"></div>
+</header>
+
+<main>
+
+  <section class="card">
+    <h2 id="formTitulo">📸 Nova verificação</h2>
+    <p class="hint">Fotografe o produto e conte o que está acontecendo com ele — isso é o mais importante do registro.</p>
+
+    <form id="produtoForm">
+      <input type="hidden" id="produtoId">
+      <div class="form-grid">
+        <div class="full">
+          <label>Foto do produto</label>
+          <div class="photo-box">
+            <img id="fotoPreview" class="photo-preview empty" alt="">
+            <label class="btn-file" for="fotoInput">📷 Tirar / escolher foto</label>
+            <input type="file" id="fotoInput" accept="image/*" capture="environment">
+          </div>
+          <p class="aviso-navegador" id="avisoNavegador">⚠️ Parece que você está num navegador dentro de outro app (WhatsApp/Instagram). Se a câmera não abrir, toque nos 3 pontinhos e escolha "Abrir no navegador" (Chrome/Safari).</p>
+        </div>
+        <div class="full">
+          <label>O que está acontecendo com esse produto?</label>
+          <select id="campoOcorrencia" class="ocorrencia-select ok" required>
+            <option value="ok">✅ Tudo certo — só conferência</option>
+            <option value="vencido">⛔ Produto vencido</option>
+            <option value="vencendo">⏳ Vencendo em breve</option>
+            <option value="danificado">💥 Embalagem danificada / avariada</option>
+            <option value="preco">🏷️ Preço errado ou sem etiqueta</option>
+            <option value="estoque">📦 Faltando estoque / precisa repor</option>
+            <option value="fora_lugar">🔀 Produto fora do lugar (setor errado)</option>
+            <option value="outro">❗ Outro problema (descrever abaixo)</option>
+          </select>
+        </div>
+        <div>
+          <label>Nome do produto</label>
+          <input type="text" id="campoNome" placeholder="Ex: Leite Integral 1L" required>
+        </div>
+        <div>
+          <label>Setor / corredor</label>
+          <input type="text" id="campoSetor" placeholder="Ex: Laticínios - Corredor 3">
+        </div>
+        <div>
+          <label>Preço (R$)</label>
+          <input type="number" id="campoPreco" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div>
+          <label>Data de validade</label>
+          <input type="date" id="campoValidade">
+        </div>
+        <div class="full">
+          <label id="labelObs">Descreva o que aconteceu (opcional)</label>
+          <textarea id="campoObs" placeholder="Ex: caixa amassada, faltam 3 unidades, preço na etiqueta diferente do sistema..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">✅ Salvar produto</button>
+        <button type="button" class="btn btn-ghost" id="btnCancelar" style="display:none;">Cancelar edição</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>📋 Prateleira monitorada</h2>
+    <p class="hint">Toque num item para editar.</p>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="buscaInput" placeholder="🔎 Buscar produto ou setor...">
+      </div>
+      <div class="chips" id="filtroChips">
+        <button class="chip active" data-filtro="todos">Todos</button>
+        <button class="chip" data-filtro="critico">🔴 Crítico</button>
+        <button class="chip" data-filtro="atencao">🟡 Atenção</button>
+        <button class="chip" data-filtro="ok">🟢 OK</button>
+      </div>
+    </div>
+
+    <div class="grid" id="gridProdutos"></div>
+  </section>
+
+  <section class="card central">
+    <h2>📲 Central de chegada de fotos</h2>
+    <p class="hint">Repositores fotografam a prateleira e mandam direto pra este número. Use os botões abaixo pra avisar o responsável sobre itens críticos.</p>
+    <div class="numero">📞 (75) 99177-1095</div>
+    <div class="central-actions">
+      <button class="btn btn-whats" id="btnEnviarRelatorio">🟢 Enviar relatório no WhatsApp</button>
+      <button class="btn btn-ghost" id="btnBaixarRelatorio">⬇️ Baixar relatório (.txt)</button>
+    </div>
+    <p class="hint" style="margin-top:12px;">Obs: o link não anexa foto automaticamente — ele abre a conversa com o texto do relatório pronto; é só anexar a(s) foto(s) na hora de enviar.</p>
+  </section>
+
+  <section class="card">
+    <label style="margin-bottom:8px; display:block;">⚙️ Avisar "vencendo" com quantos dias de antecedência?</label>
+    <input type="number" id="campoDiasAlerta" min="1" max="30" style="max-width:120px;">
+  </section>
+
+</main>
+
+<footer class="appfoot">Organizador de Prateleira · dados salvos só neste aparelho/navegador</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var LS_PRODUTOS = "prateleira_produtos_v2";
+  var LS_CONFIG = "prateleira_config_v1";
+  var CENTRAL_NUMERO_WA = "5575991771095";
+
+  var OCORRENCIAS = {
+    ok:          { label:"Tudo certo",                 emoji:"✅", severidade:"ok" },
+    vencido:     { label:"Produto vencido",             emoji:"⛔", severidade:"critico" },
+    vencendo:    { label:"Vencendo em breve",           emoji:"⏳", severidade:"atencao" },
+    danificado:  { label:"Embalagem danificada",        emoji:"💥", severidade:"critico" },
+    preco:       { label:"Preço errado / sem etiqueta", emoji:"🏷️", severidade:"atencao" },
+    estoque:     { label:"Faltando estoque",            emoji:"📦", severidade:"atencao" },
+    fora_lugar:  { label:"Fora do lugar",                emoji:"🔀", severidade:"atencao" },
+    outro:       { label:"Outro problema",               emoji:"❗", severidade:"atencao" }
+  };
+  var RANK = { ok:0, atencao:1, critico:2 };
+
+  var state = {
+    produtos: [],
+    config: { diasAlerta: 5 },
+    filtro: "todos",
+    busca: "",
+    fotoAtual: null
+  };
+
+  function carregar(){
+    try{
+      var p = localStorage.getItem(LS_PRODUTOS);
+      state.produtos = p ? JSON.parse(p) : [];
+    }catch(e){ state.produtos = []; }
+    try{
+      var c = localStorage.getItem(LS_CONFIG);
+      if(c) state.config = Object.assign(state.config, JSON.parse(c));
+    }catch(e){}
+  }
+  function salvarProdutos(){
+    try{ localStorage.setItem(LS_PRODUTOS, JSON.stringify(state.produtos)); }
+    catch(e){ alert("Não foi possível salvar (armazenamento cheio). Tente remover fotos antigas."); }
+  }
+  function salvarConfig(){ localStorage.setItem(LS_CONFIG, JSON.stringify(state.config)); }
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function hojeISO(){ return new Date().toISOString().slice(0,10); }
+
+  function diasAte(validadeISO){
+    if(!validadeISO) return null;
+    var hoje = new Date(hojeISO()+"T00:00:00");
+    var alvo = new Date(validadeISO+"T00:00:00");
+    return Math.round((alvo - hoje) / 86400000);
+  }
+
+  function severidadePorData(produto){
+    if(!produto.validade) return "ok";
+    var d = diasAte(produto.validade);
+    if(d < 0) return "critico";
+    if(d <= state.config.diasAlerta) return "atencao";
+    return "ok";
+  }
+
+  function severidadeFinal(produto){
+    var sTipo = (OCORRENCIAS[produto.tipo] || OCORRENCIAS.ok).severidade;
+    var sData = severidadePorData(produto);
+    return RANK[sData] > RANK[sTipo] ? sData : sTipo;
+  }
+
+  function headlineDe(produto){
+    var info = OCORRENCIAS[produto.tipo] || OCORRENCIAS.ok;
+    if(produto.tipo === "outro" && produto.obs){
+      return { emoji: info.emoji, texto: produto.obs.length > 42 ? produto.obs.slice(0,42)+"…" : produto.obs };
+    }
+    // se a data venceu mas o tipo escolhido não refletia isso, prioriza avisar da validade
+    var sData = severidadePorData(produto);
+    if(sData === "critico" && produto.tipo !== "vencido" && produto.tipo !== "danificado"){
+      return { emoji:"⛔", texto:"Produto vencido" };
+    }
+    return { emoji: info.emoji, texto: info.label };
+  }
+
+  function formatMoeda(v){
+    if(v === "" || v === null || v === undefined || isNaN(v)) return "sem preço";
+    return "R$ " + Number(v).toFixed(2).replace(".", ",");
+  }
+
+  function formatDataBR(iso){
+    if(!iso) return "sem validade";
+    var p = iso.split("-");
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+
+  function labelValidade(produto){
+    if(!produto.validade) return "Sem validade cadastrada";
+    var d = diasAte(produto.validade);
+    if(d < 0) return "Venceu há " + Math.abs(d) + " dia" + (Math.abs(d)===1?"":"s") + " (" + formatDataBR(produto.validade) + ")";
+    if(d === 0) return "Vence hoje (" + formatDataBR(produto.validade) + ")";
+    return "Vence em " + d + " dia" + (d===1?"":"s") + " (" + formatDataBR(produto.validade) + ")";
+  }
+
+  function redimensionarFoto(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var img = new Image();
+      img.onload = function(){
+        var maxW = 480;
+        var scale = Math.min(1, maxW / img.width);
+        var canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        cb(canvas.toDataURL("image/jpeg", 0.72));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renderStats(){
+    var total = state.produtos.length;
+    var critico = 0, atencao = 0, ok = 0;
+    state.produtos.forEach(function(p){
+      var s = severidadeFinal(p);
+      if(s==="critico") critico++;
+      else if(s==="atencao") atencao++;
+      else ok++;
+    });
+    document.getElementById("statsRow").innerHTML =
+      '<div class="stat-chip"><span class="num">'+total+'</span><span class="lbl">Total</span></div>'+
+      '<div class="stat-chip critico"><span class="num">'+critico+'</span><span class="lbl">Crítico</span></div>'+
+      '<div class="stat-chip atencao"><span class="num">'+atencao+'</span><span class="lbl">Atenção</span></div>'+
+      '<div class="stat-chip ok"><span class="num">'+ok+'</span><span class="lbl">OK</span></div>';
+  }
+
+  function listaFiltrada(){
+    var busca = state.busca.trim().toLowerCase();
+    return state.produtos
+      .filter(function(p){
+        if(state.filtro !== "todos" && severidadeFinal(p) !== state.filtro) return false;
+        if(busca && !(p.nome.toLowerCase().indexOf(busca) > -1 || (p.setor||"").toLowerCase().indexOf(busca) > -1)) return false;
+        return true;
+      })
+      .sort(function(a,b){
+        var d = RANK[severidadeFinal(b)] - RANK[severidadeFinal(a)];
+        if(d !== 0) return d;
+        return (a.nome||"").localeCompare(b.nome||"");
+      });
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function renderGrid(){
+    var itens = listaFiltrada();
+    var grid = document.getElementById("gridProdutos");
+    if(itens.length === 0){
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">'+
+        '<span class="emoji">🗂️</span>Nenhum produto encontrado.<br>Cadastre um produto acima ou mude o filtro.</div>';
+      return;
+    }
+    grid.innerHTML = itens.map(function(p){
+      var sev = severidadeFinal(p);
+      var head = headlineDe(p);
+      var fotoHtml = p.foto
+        ? '<img class="tag-photo" src="'+p.foto+'" alt="">'
+        : '<div class="tag-photo empty">📦</div>';
+      return ''+
+        '<div class="tag '+sev+'" data-id="'+p.id+'">'+
+          '<div class="tag-headline">'+head.emoji+' '+escapeHtml(head.texto)+'</div>'+
+          '<div class="tag-top">'+
+            fotoHtml+
+            '<div class="tag-info">'+
+              '<p class="tag-nome">'+escapeHtml(p.nome)+'</p>'+
+              '<p class="tag-setor">'+escapeHtml(p.setor||"Setor não informado")+'</p>'+
+            '</div>'+
+          '</div>'+
+          '<div class="tag-meta">'+
+            '<span class="tag-preco">'+formatMoeda(p.preco)+'</span>'+
+            '<span class="tag-validade">'+labelValidade(p)+'</span>'+
+          '</div>'+
+          (p.obs && p.tipo !== "outro" ? '<p class="tag-obs">'+escapeHtml(p.obs)+'</p>' : '')+
+          '<div class="tag-actions">'+
+            '<button class="btn btn-sm btn-ghost" data-acao="editar" data-id="'+p.id+'">✏️ Editar</button>'+
+            '<button class="btn btn-sm btn-whats" data-acao="avisar" data-id="'+p.id+'">📣 Avisar</button>'+
+            '<button class="btn btn-sm btn-danger" data-acao="excluir" data-id="'+p.id+'">🗑️</button>'+
+          '</div>'+
+        '</div>';
+    }).join("");
+  }
+
+  function renderTudo(){ renderStats(); renderGrid(); }
+
+  var form = document.getElementById("produtoForm");
+  var fotoInput = document.getElementById("fotoInput");
+  var fotoPreview = document.getElementById("fotoPreview");
+  var campoOcorrencia = document.getElementById("campoOcorrencia");
+  var labelObs = document.getElementById("labelObs");
+
+  // aviso se estiver num webview de app (não tem acesso confiável à câmera)
+  (function detectarWebview(){
+    var ua = navigator.userAgent || "";
+    if(/FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(ua)){
+      document.getElementById("avisoNavegador").style.display = "block";
+    }
+  })();
+
+  fotoInput.addEventListener("change", function(){
+    var file = fotoInput.files[0];
+    if(!file) return;
+    redimensionarFoto(file, function(dataUrl){
+      state.fotoAtual = dataUrl;
+      fotoPreview.src = dataUrl;
+      fotoPreview.classList.remove("empty");
+    });
+  });
+
+  function atualizarCorSelect(){
+    var sev = (OCORRENCIAS[campoOcorrencia.value] || OCORRENCIAS.ok).severidade;
+    campoOcorrencia.classList.remove("ok","atencao","critico");
+    campoOcorrencia.classList.add(sev);
+    labelObs.textContent = campoOcorrencia.value === "outro"
+      ? "Descreva o que aconteceu (obrigatório)"
+      : "Descreva o que aconteceu (opcional)";
+  }
+  campoOcorrencia.addEventListener("change", atualizarCorSelect);
+
+  function limparForm(){
+    form.reset();
+    document.getElementById("produtoId").value = "";
+    document.getElementById("formTitulo").textContent = "📸 Nova verificação";
+    document.getElementById("btnCancelar").style.display = "none";
+    fotoPreview.removeAttribute("src");
+    fotoPreview.classList.add("empty");
+    state.fotoAtual = null;
+    atualizarCorSelect();
+  }
+
+  document.getElementById("btnCancelar").addEventListener("click", limparForm);
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var id = document.getElementById("produtoId").value;
+    var tipo = campoOcorrencia.value;
+    var obs = document.getElementById("campoObs").value.trim();
+
+    if(tipo === "outro" && !obs){
+      alert('Você escolheu "Outro problema" — descreve rapidinho o que aconteceu no campo de baixo.');
+      document.getElementById("campoObs").focus();
+      return;
+    }
+
+    var dados = {
+      tipo: tipo,
+      nome: document.getElementById("campoNome").value.trim(),
+      setor: document.getElementById("campoSetor").value.trim(),
+      preco: document.getElementById("campoPreco").value,
+      validade: document.getElementById("campoValidade").value,
+      obs: obs,
+      foto: state.fotoAtual
+    };
+    if(!dados.nome) return;
+
+    if(id){
+      var existente = state.produtos.find(function(p){ return p.id === id; });
+      if(existente){
+        if(!dados.foto) dados.foto = existente.foto;
+        Object.assign(existente, dados);
+      }
+    } else {
+      dados.id = uid();
+      dados.criadoEm = hojeISO();
+      state.produtos.unshift(dados);
+    }
+    salvarProdutos();
+    limparForm();
+    renderTudo();
+  });
+
+  document.getElementById("gridProdutos").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-acao]");
+    if(!btn) return;
+    var id = btn.getAttribute("data-id");
+    var acao = btn.getAttribute("data-acao");
+    var produto = state.produtos.find(function(p){ return p.id === id; });
+    if(!produto) return;
+
+    if(acao === "editar"){
+      document.getElementById("produtoId").value = produto.id;
+      campoOcorrencia.value = produto.tipo || "ok";
+      atualizarCorSelect();
+      document.getElementById("campoNome").value = produto.nome || "";
+      document.getElementById("campoSetor").value = produto.setor || "";
+      document.getElementById("campoPreco").value = produto.preco || "";
+      document.getElementById("campoValidade").value = produto.validade || "";
+      document.getElementById("campoObs").value = produto.obs || "";
+      state.fotoAtual = produto.foto || null;
+      if(produto.foto){
+        fotoPreview.src = produto.foto;
+        fotoPreview.classList.remove("empty");
+      } else {
+        fotoPreview.removeAttribute("src");
+        fotoPreview.classList.add("empty");
+      }
+      document.getElementById("formTitulo").textContent = "✏️ Editando produto";
+      document.getElementById("btnCancelar").style.display = "inline-flex";
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+
+    if(acao === "excluir"){
+      if(confirm('Excluir "'+produto.nome+'" da lista?')){
+        state.produtos = state.produtos.filter(function(p){ return p.id !== id; });
+        salvarProdutos();
+        renderTudo();
+      }
+    }
+
+    if(acao === "avisar"){
+      var head = headlineDe(produto);
+      var texto = "📦 *Aviso de prateleira*\n"+
+        "O que aconteceu: "+head.emoji+" "+head.texto+"\n"+
+        "Produto: "+produto.nome+"\n"+
+        "Setor: "+(produto.setor||"não informado")+"\n"+
+        "Preço: "+formatMoeda(produto.preco)+"\n"+
+        "Validade: "+labelValidade(produto)+
+        (produto.obs && produto.tipo !== "outro" ? "\nDetalhes: "+produto.obs : "");
+      abrirWhats(texto);
+    }
+  });
+
+  document.getElementById("filtroChips").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    document.querySelectorAll("#filtroChips .chip").forEach(function(c){ c.classList.remove("active"); });
+    chip.classList.add("active");
+    state.filtro = chip.getAttribute("data-filtro");
+    renderGrid();
+  });
+
+  document.getElementById("buscaInput").addEventListener("input", function(e){
+    state.busca = e.target.value;
+    renderGrid();
+  });
+
+  var campoDias = document.getElementById("campoDiasAlerta");
+  campoDias.addEventListener("change", function(){
+    var v = parseInt(campoDias.value, 10);
+    state.config.diasAlerta = isNaN(v) ? 5 : Math.max(1, v);
+    salvarConfig();
+    renderTudo();
+  });
+
+  function abrirWhats(texto){
+    var url = "https://wa.me/"+CENTRAL_NUMERO_WA+"?text="+encodeURIComponent(texto);
+    window.location.href = url;
+  }
+
+  function montarRelatorio(){
+    var criticos = state.produtos.filter(function(p){ return severidadeFinal(p)==="critico"; });
+    var atencoes = state.produtos.filter(function(p){ return severidadeFinal(p)==="atencao"; });
+    var linhas = [];
+    linhas.push("📋 *Relatório de Prateleira* — "+formatDataBR(hojeISO()));
+    linhas.push("");
+    linhas.push("🔴 Crítico ("+criticos.length+"):");
+    if(criticos.length===0) linhas.push("  Nenhum ✅");
+    criticos.forEach(function(p){
+      var h = headlineDe(p);
+      linhas.push("  • "+p.nome+" — "+(p.setor||"setor n/i")+" — "+h.emoji+" "+h.texto);
+    });
+    linhas.push("");
+    linhas.push("🟡 Atenção ("+atencoes.length+"):");
+    if(atencoes.length===0) linhas.push("  Nenhum ✅");
+    atencoes.forEach(function(p){
+      var h = headlineDe(p);
+      linhas.push("  • "+p.nome+" — "+(p.setor||"setor n/i")+" — "+h.emoji+" "+h.texto);
+    });
+    linhas.push("");
+    linhas.push("Total de itens monitorados: "+state.produtos.length);
+    return linhas.join("\n");
+  }
+
+  document.getElementById("btnEnviarRelatorio").addEventListener("click", function(){
+    abrirWhats(montarRelatorio());
+  });
+
+  document.getElementById("btnBaixarRelatorio").addEventListener("click", function(){
+    var blob = new Blob([montarRelatorio()], {type:"text/plain;charset=utf-8"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "relatorio-prateleira-"+hojeISO()+".txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  function init(){
+    carregar();
+    campoDias.value = state.config.diasAlerta;
+    document.getElementById("dataHoje").textContent = formatDataBR(hojeISO());
+    atualizarCorSelect();
+    renderTudo();
+  }
+  init();
+
+})();
+</script>
+</body>
+</html>
